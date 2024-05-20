@@ -13,7 +13,7 @@ const Products = () => {
   const [showSidebar, setShowSidebar] = useState(false);
   const [imagePreview, setImagePreview] = useState([]);
   const [image, setImage] = useState([]);
-  const [uploadImage, setUploadImage] = useState(false)
+  const [validatePassed, setValidatePassed] = useState(false)
   const isSmallScreen = useMediaQuery('(max-width: 1024px)'); // Change the breakpoint as needed
   const isComputerScreen = useMediaQuery('(min-width: 1025px)');
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -26,12 +26,13 @@ const Products = () => {
   const navigate = useNavigate();
 
   const productData = {
-    pic_1: "",
-    pic_2: "",
-    pic_3: "",
-    pic_4: "",
+    pic_1: null,
+    pic_2: null,
+    pic_3: null,
+    pic_4: null,
     model: "",
     cpu: "",
+    item: "",
     ram: "",
     storage: "",
     graphics: "",
@@ -44,17 +45,42 @@ const Products = () => {
   const [data, setData] = useState(productData);
 
   const handleImageChange = (e) => {
-
-    // Convert FileList to Array
     const fileList = Array.from(e.target.files);
-    // Get the first four selected files
     const firstFourFiles = fileList.slice(0, 4);
-    // Append the first four files to the existing array
+
     const previewUrls = firstFourFiles.map(file => URL.createObjectURL(file));
     setImagePreview([...imagePreview, ...previewUrls]);
-    setImage([...image, ...firstFourFiles]);
-    console.log(image)
-    console.log(imagePreview)
+
+    const newImages = [...image, ...fileList];
+    setImage(newImages);
+
+    const newImageData = {};
+    newImages.forEach((file, index) => {
+      console.log("File", file.name)
+      newImageData[`pic_${index + 1}`] = file;
+    });
+    console.log("New Image Data", newImageData)
+
+    setData(prevData => ({
+      ...prevData,
+      ...newImageData
+    }));
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    const updatedImagePreview = [...imagePreview];
+    const uploadImage = [...image]
+    uploadImage.splice(indexToRemove, 1)
+    updatedImagePreview.splice(indexToRemove, 1);
+    setImagePreview(updatedImagePreview);
+    setImage(uploadImage)
+
+    // Also update the data object
+    setData(prevData => {
+      const newData = { ...prevData };
+      newData[`pic_${indexToRemove + 1}`] = null;
+      return newData;
+    });
   };
 
   const handleChange = (e) => {
@@ -66,18 +92,79 @@ const Products = () => {
     setData(modifyData);
   };
 
-  const checkData = async () => {
-    const emptyFields = [];
-    for (const key in data) {
-      if (data[key] === "") {
-        emptyFields.push(key);
+  const validation = () => {
+    return new Promise((resolve) => {
+      const emptyFields = [];
+      const keys = Object.keys(data);
+
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (data[key] === "" || data[key] === null) {
+          emptyFields.push(key);
+          console.log("Empty Fields: ", emptyFields);
+        }
+
+        if (i === keys.length - 1) {
+          if (emptyFields.length === 0) {
+            console.log("End of loop, all fields are valid");
+            resolve(true);
+          } else {
+            setValidateData(emptyFields);
+            resolve(false);
+          }
+        }
       }
-    }
-    setValidateData(emptyFields);
-    setTimeout(() => {
-      setValidateData([]);
-    }, 5000);
+    });
   };
+
+
+  // const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const dataSave = async () => {
+    try {
+      const isValidationPassed = await validation();
+      if (!isValidationPassed) {
+        return; // Exit if validation failed
+      }
+
+      const formData = new FormData();
+      Object.keys(data).forEach(key => {
+        formData.append(key, data[key]);
+      });
+
+      console.log("validateData is true");
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}product/productCreatePic`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          },
+        }
+      );
+
+      console.log(response);
+      setResultcode(response.data.code);
+      setAlertMessage(response.data.message);
+      setShowAlert(true);
+      console.log(response.data.code);
+
+      if (response.data.code === "200") {
+        console.log("Back")
+        // await delay(2000); // Delay for 2 seconds (2000 milliseconds)
+        navigate("/productsList");
+      }
+    } catch (error) {
+      console.error("Error saving data:", error.message);
+    }
+  };
+
+
 
   const toggleAlert = () => {
     try {
@@ -92,93 +179,67 @@ const Products = () => {
     }
   };
 
+  //   const dataSave = async () => {
+  //     try {
 
-  const upload = async () => {
-    try {
-      if (image.length === 0) {
-        return;
-      }
-      const item = data.item
-      const model = data.model
-      image.forEach(async (imageFile, index) => {
-        const uploadTask = storage.ref().child(`HeinHtet/${item}/${model}/${imageFile.name}`).put(imageFile);
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            setUploadProgress(progress); // Update progress state
-          },
-          (error) => {
-            console.error(error);
-          },
-          async () => {
-            await uploadTask.snapshot.ref.getDownloadURL().then((url) => {
-              setData((prevData) => ({
-                ...prevData,
-                [`pic_${index + 1}`]: url
-              }));
-              console.log("Upload successful! URL:", url);
-              console.log(data)
-            }).catch((error) => {
-              console.error("Error getting download URL:", error);
-            });
-          }
-        );
-      });
-    } catch (error) {
-      console.log(error)
-    }
+  //       const formData = new FormData();
+  //       Object.keys(data).forEach(key => {
+  //         formData.append(key, data[key]);
+  //       });
 
-  };
+  //       const response = await axios.post(
+  //         `${import.meta.env.VITE_API_URL}product/productCreatePic`,
+  //         formData,
+  //         {
+  //           headers: {
+  //             'Content-Type': 'multipart/form-data',
+  //           },
+  //           onUploadProgress: (progressEvent) => {
+  //             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+  //             setUploadProgress(percentCompleted);
+  //           },
+  //         }
+  //       );
+  //       console.log(response)
 
-  const dataSave = async () => {
-    try {
-      upload();
-      setUploadImage(true)
-    } catch (error) {
-      console.error("Error saving data:", error.message);
-    }
-  }
+  //       setResultcode(response.data.code);
+  //       setAlertMessage(response.data.message);
+  //       setShowAlert(true);
+  //       console.log(response.data.code)
+  //     }
+  //     if (reusltCode === "200") {
+  //       navigate("/productsList")
+  //     }
+  //   }
+  // } catch (error) {
+  //   console.error("Error saving data:", error.message);
+  // }
+  // }
+
+
+
+
 
   const toggleRightSidebar = () => {
     setShowSidebar(!showSidebar);
     console.log(showSidebar)
   };
 
-  const handleRemoveImage = (indexToRemove) => {
-    const updatedImagePreview = [...imagePreview];
-    updatedImagePreview.splice(indexToRemove, 1);
-    setImagePreview(updatedImagePreview);
-  };
-
 
   useEffect(() => {
-    // setData()
     console.log("Data => ", data)
-    if (uploadImage && uploadProgress === 100) {
-      // axios.post(
-      //   `${import.meta.env.VITE_API_URL}product/productCreate`,
-      //   data
-      // ).then(res => {
-      //   console.log(res)
-      // }
-      // )
-      // console.log(res);
-      console.log("is 100")
-      checkData()
-      if(validateData.length == 0){
-        console.log("can Save")
-      }
-    }
-  }, [data, uploadImage])
+    console.log("Image=>", image)
+    // console.log("ImageURL =>", imagePreview)
+    console.log("Validation =>", validatePassed)
+
+  }, [data, validatePassed, image])
 
   return (
     <>
       <Navbar />
-      <div className={`absolute right-12 border-2 w-80 z-10 top-20 h-8 rounded text-center ${!showAlert ? 'hidden' : ``} ${reusltCode ? " text-green-600" : " text-red-600"}`}>
+      <div className={`absolute right-12 border-2 w-80 z-10 top-20 h-8 rounded text-center ${!showAlert ? 'hidden' : `display mb-5`} ${reusltCode === "200" ? "text-green-600 bg-green-100 rounded-md outline outline-offset-2 outline-1" : " text-red-600 bg-red-100 rounded-md outline outline-offset-2 outline-1"}`}>
         {alertMessage}
       </div>
-      {console.log("Upload Process => ", uploadProgress)}
       <div className={isComputerScreen ? "ml-5 mt-5" : "mx-auto"}>
         <div className={isSmallScreen ? `${showSidebar ? '' : 'hidden'} mt-5` : ''}>
           <div className={isComputerScreen ? "hidden" : "text-center"} onClick={toggleRightSidebar} >
@@ -206,7 +267,7 @@ const Products = () => {
               noValidate
               autoComplete="off"
             >
-              <div className={isSmallScreen ? "ml-5flex flex-wrap ml-" : ""}>
+              <div className={isSmallScreen ? "ml-5flex flex-wrap ml-5" : ""}>
                 <TextField id="outlined-search" label="Item" placeholder='Lenovo, Dell,..' type="text" name="item" onChange={handleChange} className={`focus:bg-inherit ${validateData.includes("item") ? "bg-red-300" : ""}`} />
                 <TextField id="outlined-search" label="Model" type="text" name="model" onChange={handleChange} className={`focus:bg-inherit ${validateData.includes("model") ? "bg-red-300" : ""}`} />
                 <TextField id="outlined-search" label="CPU" type="text" name="cpu" onChange={handleChange} className={`focus:bg-inherit ${validateData.includes("cpu") ? "bg-red-300" : ""}`} />
@@ -217,10 +278,12 @@ const Products = () => {
                 <TextField id="outlined-search" label="Screen Size" type="text" name="screen_size" onChange={handleChange} className={`focus:bg-inherit ${validateData.includes("screen_size") ? "bg-red-300" : ""}`} />
                 <TextField id="outlined-search" label="Color" type="text" name="color" onChange={handleChange} className={`focus:bg-inherit ${validateData.includes("color") ? "bg-red-300" : ""}`} />
                 <TextField id="outlined-search" label="Price" type="text" name="price" onChange={handleChange} className={`focus:bg-inherit ${validateData.includes("price") ? "bg-red-300" : ""}`} />
+
               </div>
             </Box>
 
-            <div className={isSmallScreen ? "ml-2 flex flex-wrap ml-2" : "flex flex-wrap ml-2 "}>
+
+            <div className={isSmallScreen ? "ml-2 flex flex-wrap ml-5" : "flex flex-wrap ml-2 "}>
               {imagePreview.map((url, index) => (
                 <div key={index} width="102"
                   height="100" className='flex relative'>
@@ -243,8 +306,6 @@ const Products = () => {
               <input type="file" className='mt-1 ml-4 font-medium"' onChange={(e) => { handleImageChange(e) }} accept="image/*"
                 multiple />
             </div>
-
-
             {/* <div className={isSmallScreen ? "ml-2 flex flex-wrap ml-2" : "flex flex-wrap ml-2 "}>
               {imagePreview.map((url, index) => (
                 <div key={index} className="relative">
@@ -271,15 +332,13 @@ const Products = () => {
                 multiple
               />
             </div> */}
-
-
-            <div className={validateData ? 'text-red-700 text-center' : "hidden"}>
-              <p><strong>{validateData} </strong> is empty. Please enter a value.</p>
+            <div style={{ border: '1px solid #ccc', width: '20%', margin: '20px 0' }}>
+              <div style={{ width: `${uploadProgress}%`, backgroundColor: 'green', height: '20px', textAlign: 'center', color: 'white' }}>
+                {uploadProgress}%
+              </div>
             </div>
-
-
             <div className={isComputerScreen ? "mt-3 h-24 text-center" : "ml-5 mt-5"}>
-              <button className='rounded mx-2 border border-slate-300 w-32 min-h-10 hover:border-slate-800 hover:bg-green-500 bg-green-500 shadow-xl shadow-green-700 font-semibold tracking-widest' onClick={() => { dataSave() }}>ADD</button>
+              <button className='rounded mx-2 border border-slate-300 w-32 min-h-10 hover:border-slate-800 hover:bg-green-500 bg-green-500 shadow-xl shadow-green-700 font-semibold tracking-widest' onClick={() => { dataSave(), validation() }}>ADD</button>
               <button className='rounded mx-2 border border-slate-300 w-32 min-h-10 hover:border-slate-800 hover:bg-slate-300 bg-white-400 shadow-xl shadow-slate-700 font-semibold tracking-widest' onClick={() => navigate("/productsList")} >CANCEL</button>
             </div>
           </div>
@@ -303,3 +362,46 @@ const Products = () => {
 }
 
 export default Products
+
+
+
+// const upload = async () => {
+//   try {
+//     const item = data.item
+//     const model = data.model
+//     if (image.length === 4) {
+//       image.forEach(async (imageFile, index) => {
+//         const uploadTask = storage.ref().child(`HeinHtet/${item}/${model}/${imageFile.name}`).put(imageFile);
+//         uploadTask.on(
+//           "state_changed",
+//           (snapshot) => {
+//             const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+//             setUploadProgress(progress); // Update progress state
+//           },
+//           (error) => {
+//             console.error(error);
+//           },
+//           async () => {
+//             await uploadTask.snapshot.ref.getDownloadURL().then((url) => {
+//               setData((prevData) => ({
+//                 ...prevData,
+//                 [`pic_${index + 1}`]: url
+//               }));
+//               console.log("Upload successful! URL:", url);
+//               console.log(data)
+//             }).catch((error) => {
+//               console.error("Error getting download URL:", error);
+//             });
+//           }
+//         );
+//       });
+//       // alert("Lenght is 4")
+//     } else {
+//       alert("You  must choose definitely 4 photos.")
+//       console.log("You  must choose definitely 4 photos.")
+//       return
+//     }
+//   } catch (error) {
+//     console.log(error)
+//   }
+// };
