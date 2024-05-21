@@ -89,13 +89,13 @@ const Navbar = () => {
                                 display: { xs: 'block', md: 'none' },
                             }}
                         >
-                            <MenuItem onClick={() => navigate("/products")}>
+                            <MenuItem onClick={() => navigate("/productsList")}>
                                 <Typography textAlign="center">Products</Typography>
                             </MenuItem>
-                            <MenuItem onClick={handleCloseNavMenu}>
+                            <MenuItem onClick={() => navigate("/advertising")}>
                                 <Typography textAlign="center">Advertising</Typography>
                             </MenuItem>
-                            <MenuItem onClick={handleCloseNavMenu}>
+                            <MenuItem >
                                 <Typography textAlign="center">Blog</Typography>
                             </MenuItem>
 
@@ -119,7 +119,7 @@ const Navbar = () => {
                             textDecoration: 'none',
                         }}
                     >
-                        LOGO
+                        Genius
                     </Typography>
                     <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                         <Button

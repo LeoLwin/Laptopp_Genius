@@ -1,11 +1,10 @@
-import React from 'react'
-import Test from './Test'
 import Navbar from './components/Navbar'
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Products from './components/Products';
-import  Dashboard  from './components/Dashboard';
+import Products from './components/products/Products';
+import Dashboard from './components/Dashboard';
 import Advertising from './components/advertising/Advertising';
-import ProductsList from './components/ProductsList';
+import ProductsList from './components/products/ProductsList';
+import ProductDetail from './components/products/ProductDetail';
 
 
 const App = () => {
@@ -17,6 +16,8 @@ const App = () => {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/productsList" element={<ProductsList />} />
                     <Route path="/products" element={<Products />} />
+                    <Route path="/productDetail/:id" element={<ProductDetail />} />
+                    <Route path="/advertising" element={<Advertising />} />
                     <Route path="/advertising" element={<Advertising />} />
 
                     {/* <Route path="/table/:id/update" element={<SeatUpdate />} /> */}

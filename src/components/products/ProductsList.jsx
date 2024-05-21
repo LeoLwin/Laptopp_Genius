@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { useEffect, useRef, useState } from 'react'
-import Navbar from './Navbar';
+import Navbar from '../Navbar';
 import { useNavigate } from 'react-router-dom';
-import Pagination from './util/Pagination';
-import DeleteButton from './util/DeleteButton';
+import Pagination from '../util/Pagination';
+import DeleteButton from '../util/DeleteButton';
 
 const ProductsList = () => {
 
@@ -70,8 +70,7 @@ const ProductsList = () => {
 
     const handleDelete = async (id) => {
         try {
-            console.log("Work")
-            const result = await axios.delete(`${import.meta.env.VITE_API_URL}product/productDelete/${id}`)
+           const result = await axios.delete(`${import.meta.env.VITE_API_URL}product/productDelete/${id}`)
             console.log(result.data.code)
             if (result.data.code === "200") {
                 setAlertMessage(result.data.message)
@@ -172,9 +171,9 @@ const ProductsList = () => {
                                     <td className="px-6 py-4">{dataItem.ram}</td>
                                     <td className="px-6 py-4">{dataItem.cpu}</td>
                                     <td className="px-6 py-4">{dataItem.price}</td>
-                                    <td className='px-6 py-4  flex space-x-8 text-start' >
-                                        <i className="fa-solid fa-info hover:text-gray-600 transform hover:translate-y-[-2px] transition duration-200 ease-in-out"></i>
-                                        <i className="fa-regular fa-pen-to-square hover:text-yellow-600 transform hover:translate-y-[-2px] transition duration-200 ease-in-out"></i>
+                                    <td className='px-6 py-4  flex space-x-8 ' >
+                                        <i className="fa-solid fa-info hover:text-gray-600 transform hover:translate-y-[-2px] transition duration-200 ease-in-out" onClick={() => navigate(`/productDetail/${dataItem.id}`)}></i>
+                                        <i className="fa-regular fa-pen-to-square hover:text-yellow-600 transform hover:translate-y-[-2px] transition duration-200 ease-in-out"  ></i>
                                         <DeleteButton deleteItem={handleDelete} id={dataItem.id} />
                                     </td>
                                 </tr>

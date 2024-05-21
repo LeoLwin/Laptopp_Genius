@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
-import Navbar from './Navbar';
+import Navbar from '../Navbar';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import { Icon, useMediaQuery } from '@mui/material';
 import ArrowLeftIcon from '@mui/icons-material/ArrowLeft';
-import { storage } from '../firebase';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -118,12 +117,11 @@ const Products = () => {
   };
 
 
-  // const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
   const dataSave = async () => {
     try {
       const isValidationPassed = await validation();
       if (!isValidationPassed) {
+        setValidatePassed(false)
         return; // Exit if validation failed
       }
 
@@ -166,60 +164,6 @@ const Products = () => {
 
 
 
-  const toggleAlert = () => {
-    try {
-      setShowAlert(true); // Set showAlert to true
-      // console.log("Alert is true", showAlert);
-      setTimeout(() => {
-        setShowAlert(false); // Set showAlert back to false after 10 milliseconds
-        // console.log("Alert is false", showAlert);
-      }, 5000);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  //   const dataSave = async () => {
-  //     try {
-
-  //       const formData = new FormData();
-  //       Object.keys(data).forEach(key => {
-  //         formData.append(key, data[key]);
-  //       });
-
-  //       const response = await axios.post(
-  //         `${import.meta.env.VITE_API_URL}product/productCreatePic`,
-  //         formData,
-  //         {
-  //           headers: {
-  //             'Content-Type': 'multipart/form-data',
-  //           },
-  //           onUploadProgress: (progressEvent) => {
-  //             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-  //             setUploadProgress(percentCompleted);
-  //           },
-  //         }
-  //       );
-  //       console.log(response)
-
-  //       setResultcode(response.data.code);
-  //       setAlertMessage(response.data.message);
-  //       setShowAlert(true);
-  //       console.log(response.data.code)
-  //     }
-  //     if (reusltCode === "200") {
-  //       navigate("/productsList")
-  //     }
-  //   }
-  // } catch (error) {
-  //   console.error("Error saving data:", error.message);
-  // }
-  // }
-
-
-
-
-
   const toggleRightSidebar = () => {
     setShowSidebar(!showSidebar);
     console.log(showSidebar)
@@ -229,7 +173,6 @@ const Products = () => {
   useEffect(() => {
     console.log("Data => ", data)
     console.log("Image=>", image)
-    // console.log("ImageURL =>", imagePreview)
     console.log("Validation =>", validatePassed)
 
   }, [data, validatePassed, image])

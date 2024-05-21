@@ -18,18 +18,15 @@ const DeleteButton = ({ deleteItem, id }) => {
   };
 
   return (
-    <div className="relative mt-0">
-      <button className="btn btn-danger" onClick={handleDelete}>
-        <i className="fa-solid fa-trash hover:text-red-600 transform hover:translate-y-[-2px] transition duration-200 ease-in-out"></i>
-      </button>
+    <>
+      <i className="fa-solid fa-trash hover:text-red-600 transform hover:translate-y-[-2px] transition duration-200 ease-in-out" onClick={handleDelete}></i>
       {showTooltip && (
         <ConfirmationTooltip
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />
       )}
-    </div>
-
+    </>
   );
 };
 
